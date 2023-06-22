@@ -1,0 +1,47 @@
+version: "3.8"
+services:
+  postgres-user:
+    image: postgres
+    container_name: postgres-user
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=strideyouuserdb
+      - POSTGRES_DB=postgres
+    volumes:
+      - ${STORAGE_PATH}:/var/lib/postgresql/data
+    networks:
+      - usernet
+  
+  user:
+    build: .
+    container_name: user
+    # TODO: remove for prod
+    ports:
+      - 3002:3000
+    depends_on:
+      - postgres-user
+    networks:
+      - usernet
+      - proxynet
+
+  
+  #TODO: remove for prod or maybe another DNS
+  pgweb-user:
+    container_name: pgweb-user
+    image: sosedoff/pgweb
+    restart: always
+    ports:
+      - 8082:8081
+    environment:
+      - DATABASE_URL=postgres://postgres:strideyouuserdb@postgres-user:5432/postgres?sslmode=disable
+    depends_on:
+      - postgres-user
+    networks:
+      - usernet
+      - proxynet
+
+networks:
+  usernet:
+    name: strideyou_user_network
+  proxynet:
+    name: strideyou_network
